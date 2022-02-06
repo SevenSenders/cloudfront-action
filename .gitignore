@@ -1,0 +1,10 @@
+/.idea
+
+/node_modules
+/coverage
+/build
+/.cache
+
+/.yarn
+/yarn-debug.log*
+/yarn-error.log*

@@ -1,0 +1,32 @@
+{
+  "name": "cloudfront-action",
+  "version": "0.0.1",
+  "private": true,
+  "description": "GitHub action for cloudfront deploying",
+  "keywords": [
+    "github",
+    "actions",
+    "cloudfront"
+  ],
+  "homepage": "https://github.com/SevenSenders/cloudfront-action#readme",
+  "bugs": {
+    "url": "https://github.com/SevenSenders/cloudfront-action/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SevenSenders/cloudfront-action.git"
+  },
+  "license": "Apache-2.0",
+  "author": "SevenSenders TEAM",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "ncc build index.js -o dist --source-map"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "@actions/core": "^1.6.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.31.1"
+  }
+}

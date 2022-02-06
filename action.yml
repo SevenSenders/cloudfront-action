@@ -1,0 +1,12 @@
+name: 'Cloudfront Action'
+description: 'Cloudfront Action for the Frontend applications.'
+inputs:
+  s3-bucket-name:
+    description: 'The name of the target S3 bucket.'
+    required: true
+  build-folder-path:
+    description: 'The artifacts folder path.'
+    required: true
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
