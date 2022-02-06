@@ -18,4 +18,4 @@ This action deploys your applications to Cloudfront.
 
 ## Example usage
 
-uses: SevenSenders/cloudfront-action@v0.0.1
+uses: SevenSenders/cloudfront-action@v0.0.3
