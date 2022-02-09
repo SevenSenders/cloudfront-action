@@ -44,7 +44,7 @@ async function invalidation(distribution_ID, paths) {
     });
 }
 
-function upload_to_s3(build_folder_path, s3_name) {
+function upload_to_s3(s3_name, build_folder_path) {
     const dirName = path.basename(build_folder_path);
     function walkSync(currentDirPath, callback) {
         fs.readdirSync(currentDirPath).forEach(function (name) {
