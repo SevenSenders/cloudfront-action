@@ -46,6 +46,7 @@ async function invalidation(distribution_ID, paths) {
 
 function upload_to_s3(s3_name, build_folder_path) {
     const dirName = path.basename(build_folder_path);
+    console.info(dirName);
     function walkSync(currentDirPath, callback) {
         fs.readdirSync(currentDirPath).forEach(function (name) {
             const filePath = path.join(currentDirPath, name);
@@ -61,8 +62,7 @@ function upload_to_s3(s3_name, build_folder_path) {
         if (filePath.endsWith("/")) {
             return;
         }
-
-        const bucketPath = `${dirName}${filePath.split(dirName)[1]}`;
+        const bucketPath = `${filePath.split(dirName)[1].replace('/','')}`;
         const params = {
             Bucket: s3_name,
             Key: bucketPath,

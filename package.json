@@ -1,6 +1,6 @@
 {
   "name": "cloudfront-action",
-  "version": "0.0.3",
+  "version": "0.1.2",
   "private": true,
   "description": "GitHub action for cloudfront deploying",
   "keywords": [
