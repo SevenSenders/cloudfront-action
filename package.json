@@ -23,7 +23,7 @@
     "prepare": "ncc build index.js -o dist --source-map"
   },
   "dependencies": {
-    "@actions/core": "^1.6.0",
+    "@actions/core": "^1.9.1",
     "aws-sdk": "^2.1070.0",
     "fs": "^0.0.1-security",
     "mime-types": "^2.1.34",
