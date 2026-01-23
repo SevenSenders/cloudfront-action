@@ -41,6 +41,12 @@ Useful for testing before actual deployment.
 
 **Optional** Prefix/folder path in S3 bucket. Default: `''` (root level)
 
+### `bypass-deletion-check`
+
+**Optional** Bypass the 90% deletion ratio safeguard for adhoc situations. Default: `false`
+
+**Warning:** Use with caution. Only enable when you're certain a large deletion is intentional.
+
 ## Outputs
 
 ### `uploaded`
@@ -98,6 +104,17 @@ Number of files deleted from S3.
     s3-bucket-name: my-bucket
     build-folder-path: ./dist
     s3-prefix: v2/app
+```
+
+### Bypass deletion safeguard (adhoc use)
+
+```yaml
+- name: Deploy with large deletion
+  uses: SevenSenders/cloudfront-action@v1
+  with:
+    s3-bucket-name: my-bucket
+    build-folder-path: ./dist
+    bypass-deletion-check: true  # Use with caution
 ```
 
 ## Migrating from v0.x to v1.0.0
@@ -191,9 +208,26 @@ Your IAM role/user now needs the `s3:DeleteObject` permission:
 ## Safety Features
 
 - **Empty folder check** - Refuses to sync if local folder is empty (would delete everything)
-- **Max deletion ratio** - Refuses to delete >90% of files in one run
+- **Max deletion ratio** - Refuses to delete >90% of files in one run (can be bypassed for adhoc situations)
 - **Dry-run mode** - Preview changes before applying
 - **Detailed logging** - Clear output of what changed
+
+### Bypassing the Deletion Safeguard
+
+For adhoc situations where you need to delete a large portion of files, you can bypass the deletion ratio check:
+
+**In GitHub Actions workflow:**
+
+```yaml
+- name: Deploy with bypass
+  uses: SevenSenders/cloudfront-action@v1
+  with:
+    s3-bucket-name: my-bucket
+    build-folder-path: ./dist
+    bypass-deletion-check: true
+```
+
+**Warning:** Only use this option when you're certain the deletion is intentional.
 
 ## License
 

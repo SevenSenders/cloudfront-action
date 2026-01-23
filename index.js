@@ -63,6 +63,7 @@ async function run() {
     const deleteNonExisting = core.getBooleanInput('delete-non-existing');
     const dryRun = core.getBooleanInput('dry-run');
     const prefix = core.getInput('s3-prefix');
+    const bypassDeletionCheck = core.getBooleanInput('bypass-deletion-check');
     
     console.log(`Starting deployment to S3 bucket: ${bucket}`);
     
@@ -70,7 +71,8 @@ async function run() {
     const result = await syncToS3(bucket, buildFolderPath, {
       deleteNonExisting,
       dryRun,
-      prefix
+      prefix,
+      bypassDeletionCheck
     });
     
     console.log(`Sync complete: ${result.uploaded} uploaded, ${result.skipped} skipped, ${result.deleted} deleted`);
