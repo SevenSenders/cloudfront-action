@@ -1,12 +1,14 @@
 {
   "name": "cloudfront-action",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "private": true,
-  "description": "GitHub action for cloudfront deploying",
+  "description": "GitHub action to sync files to S3 and invalidate CloudFront cache",
   "keywords": [
     "github",
     "actions",
-    "cloudfront"
+    "cloudfront",
+    "s3",
+    "sync"
   ],
   "homepage": "https://github.com/SevenSenders/cloudfront-action#readme",
   "bugs": {
@@ -20,16 +22,19 @@
   "author": "SevenSenders TEAM",
   "main": "index.js",
   "scripts": {
-    "prepare": "ncc build index.js -o dist --source-map"
+    "build": "ncc build index.js -o dist --source-map",
+    "prepare": "npm run build"
   },
   "dependencies": {
-    "@actions/core": "^1.6.0",
-    "aws-sdk": "^2.1070.0",
-    "fs": "^0.0.1-security",
-    "mime-types": "^2.1.34",
-    "path": "^0.12.7"
+    "@actions/core": "^1.10.0",
+    "@aws-sdk/client-s3": "^3.450.0",
+    "@aws-sdk/client-cloudfront": "^3.450.0",
+    "mime-types": "^2.1.35"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.31.1"
+    "@vercel/ncc": "^0.38.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
