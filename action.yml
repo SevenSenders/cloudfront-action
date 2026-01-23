@@ -1,5 +1,5 @@
 name: 'Cloudfront Action'
-description: 'Cloudfront Action for the Frontend applications.'
+description: 'Sync files to S3 and invalidate CloudFront cache'
 inputs:
   s3-bucket-name:
     description: 'The name of the target S3 bucket.'
@@ -7,6 +7,29 @@ inputs:
   build-folder-path:
     description: 'The artifacts folder path.'
     required: true
+  delete-non-existing:
+    description: 'Delete files in S3 that do not exist locally (sync --delete behavior)'
+    required: false
+    default: 'true'
+  dry-run:
+    description: 'Preview changes without applying them'
+    required: false
+    default: 'false'
+  s3-prefix:
+    description: 'Optional prefix/folder in S3 bucket'
+    required: false
+    default: ''
+  bypass-deletion-check:
+    description: 'Bypass the 90% deletion ratio safeguard for adhoc situations (use with caution)'
+    required: false
+    default: 'false'
+outputs:
+  uploaded:
+    description: 'Number of files uploaded'
+  skipped:
+    description: 'Number of files skipped (unchanged)'
+  deleted:
+    description: 'Number of files deleted'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
