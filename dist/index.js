@@ -73279,9 +73279,12 @@ async function syncToS3(bucket, buildFolderPath, options = {}) {
   
   // SAFEGUARD 2: Limit max deletions (don't delete > 90% of files)
   // Can be bypassed with bypassDeletionCheck=true for adhoc situations
-  if (s3Objects.size > 10 && toDelete.length > 0 && !bypassDeletionCheck) {
+  if (s3Objects.size > 10 && toDelete.length > 0) {
     const deleteRatio = toDelete.length / s3Objects.size;
-    if (deleteRatio > maxDeletionRatio) {
+    
+    if (bypassDeletionCheck && deleteRatio > maxDeletionRatio) {
+      console.warn(`WARNING: Deletion safeguard bypassed! Deleting ${toDelete.length}/${s3Objects.size} files (${Math.round(deleteRatio * 100)}%)`);
+    } else if (deleteRatio > maxDeletionRatio) {
       throw new Error(
         `Refusing to delete ${toDelete.length}/${s3Objects.size} files (>${maxDeletionRatio * 100}%). ` +
         `This appears to be a destructive operation. Check your build folder. ` +
