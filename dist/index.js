@@ -73242,7 +73242,8 @@ async function syncToS3(bucket, buildFolderPath, options = {}) {
     deleteNonExisting = true,
     dryRun = false,
     prefix = '',
-    maxDeletionRatio = 0.9
+    maxDeletionRatio = 0.9,
+    bypassDeletionCheck = false
   } = options;
   
   console.log(`Syncing ${buildFolderPath} to s3://${bucket}/${prefix}`);
@@ -73277,12 +73278,14 @@ async function syncToS3(bucket, buildFolderPath, options = {}) {
   }
   
   // SAFEGUARD 2: Limit max deletions (don't delete > 90% of files)
-  if (s3Objects.size > 10 && toDelete.length > 0) {
+  // Can be bypassed with bypassDeletionCheck=true for adhoc situations
+  if (s3Objects.size > 10 && toDelete.length > 0 && !bypassDeletionCheck) {
     const deleteRatio = toDelete.length / s3Objects.size;
     if (deleteRatio > maxDeletionRatio) {
       throw new Error(
         `Refusing to delete ${toDelete.length}/${s3Objects.size} files (>${maxDeletionRatio * 100}%). ` +
-        `This appears to be a destructive operation. Check your build folder.`
+        `This appears to be a destructive operation. Check your build folder. ` +
+        `Use bypassDeletionCheck=true to override.`
       );
     }
   }
@@ -73941,6 +73944,7 @@ async function run() {
     const deleteNonExisting = core.getBooleanInput('delete-non-existing');
     const dryRun = core.getBooleanInput('dry-run');
     const prefix = core.getInput('s3-prefix');
+    const bypassDeletionCheck = core.getBooleanInput('bypass-deletion-check');
     
     console.log(`Starting deployment to S3 bucket: ${bucket}`);
     
@@ -73948,7 +73952,8 @@ async function run() {
     const result = await syncToS3(bucket, buildFolderPath, {
       deleteNonExisting,
       dryRun,
-      prefix
+      prefix,
+      bypassDeletionCheck
     });
     
     console.log(`Sync complete: ${result.uploaded} uploaded, ${result.skipped} skipped, ${result.deleted} deleted`);
