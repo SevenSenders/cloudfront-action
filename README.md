@@ -10,6 +10,8 @@ This action syncs your static files to S3 and invalidates the CloudFront cache.
 
 Requires GitHub Actions runner **v2.328.0 or newer** (GitHub-hosted runners already qualify). No input changes.
 
+**If you used `s3-prefix` with v1.0.x:** earlier runs uploaded your files to the bucket root, and those copies are not removed automatically. Run once with `dry-run: true` to review what will be deleted under the prefix, then clean up the stray root-level objects manually.
+
 ## What's New in v1.0.0
 
 **Major breaking change:** This version now syncs files like `aws s3 sync --delete` by default:
