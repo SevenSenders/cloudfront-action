@@ -16,16 +16,21 @@ let originalSend;
 /**
  * Stub every S3 call: ListObjectsV2 returns the given objects, writes are recorded
  */
-function stubS3(existingObjects) {
+function stubS3(existingObjects, { pageSize = 1000 } = {}) {
   S3Client.prototype.send = async function (command) {
     sent.push(command);
     switch (command.constructor.name) {
-      case 'ListObjectsV2Command':
+      case 'ListObjectsV2Command': {
+        const matching = Object.entries(existingObjects)
+          .filter(([key]) => key.startsWith(command.input.Prefix || ''));
+        const start = Number(command.input.ContinuationToken || 0);
+        const next = start + pageSize;
         return {
-          Contents: Object.entries(existingObjects)
-            .filter(([key]) => key.startsWith(command.input.Prefix || ''))
-            .map(([key, content]) => ({ Key: key, ETag: `"${md5(content)}"`, Size: content.length }))
+          Contents: matching.slice(start, next)
+            .map(([key, content]) => ({ Key: key, ETag: `"${md5(content)}"`, Size: content.length })),
+          NextContinuationToken: next < matching.length ? String(next) : undefined
         };
+      }
       case 'PutObjectCommand':
         return {};
       case 'DeleteObjectsCommand':
@@ -96,6 +101,41 @@ test('sync without prefix keeps keys at the bucket root', async () => {
     ['old.js']
   );
   assert.deepEqual(result, { uploaded: 1, skipped: 1, deleted: 1 });
+});
+
+test('sync with slash-wrapped prefix and paginated listing keeps keys under the prefix', async () => {
+  stubS3({
+    'v2/app/index.html': 'index',
+    'v2/app/assets/app.js': 'app-v1',
+    'v2/app/old.js': 'stale'
+  }, { pageSize: 2 });
+
+  const result = await syncToS3('bucket', buildDir, { prefix: '/v2/app/' });
+
+  const listCalls = commands('ListObjectsV2Command');
+  assert.equal(listCalls.length, 2);
+  assert.ok(listCalls.every((c) => c.input.Prefix === 'v2/app/'));
+  assert.deepEqual(commands('PutObjectCommand').map((c) => c.input.Key), ['v2/app/assets/app.js']);
+  assert.deepEqual(result, { uploaded: 1, skipped: 1, deleted: 1 });
+});
+
+test('deletion safeguard counts only objects under the prefix', async () => {
+  // 12 orphans under the prefix (> 90% of the 13 prefix objects), 100 unrelated objects elsewhere
+  const existing = { 'v2/app/index.html': 'index' };
+  for (let i = 0; i < 12; i++) existing[`v2/app/orphan-${i}.js`] = 'stale';
+  for (let i = 0; i < 100; i++) existing[`other/file-${i}.js`] = 'other';
+  stubS3(existing);
+
+  await assert.rejects(syncToS3('bucket', buildDir, { prefix: 'v2/app' }), /Refusing to delete 12\/13 files/);
+  assert.equal(commands('PutObjectCommand').length, 0);
+  assert.equal(commands('DeleteObjectsCommand').length, 0);
+
+  sent = [];
+  const result = await syncToS3('bucket', buildDir, { prefix: 'v2/app', bypassDeletionCheck: true });
+  assert.equal(result.deleted, 12);
+  assert.ok(commands('DeleteObjectsCommand')
+    .flatMap((c) => c.input.Delete.Objects.map((o) => o.Key))
+    .every((key) => key.startsWith('v2/app/')));
 });
 
 test('dry run with prefix performs no writes', async () => {
