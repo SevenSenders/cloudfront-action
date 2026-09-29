@@ -2,6 +2,16 @@
 
 This action syncs your static files to S3 and invalidates the CloudFront cache.
 
+## What's New in v1.1.0
+
+- ✅ **Node 24 runtime** - Node 20 was removed from GitHub Actions runners on 2026-09-23
+- ✅ **Fixed `s3-prefix`** - files are now uploaded under the prefix and only objects under that prefix are compared/deleted (previously files landed at the bucket root and everything under the prefix, including sibling folders such as `app2/` for prefix `app`, was deleted)
+- ✅ Updated AWS SDK and `undici` (resolves all `npm audit` findings)
+
+Requires GitHub Actions runner **v2.328.0 or newer** (GitHub-hosted runners already qualify). No input changes.
+
+**If you used `s3-prefix` with v1.0.x:** earlier runs uploaded your files to the bucket root, and those copies are not removed automatically. Run once with `dry-run: true` to review what will be deleted under the prefix, then clean up the stray root-level objects manually.
+
 ## What's New in v1.0.0
 
 **Major breaking change:** This version now syncs files like `aws s3 sync --delete` by default:
@@ -11,7 +21,7 @@ This action syncs your static files to S3 and invalidates the CloudFront cache.
 - ✅ Proper async/await flow (fixes race conditions)
 - ✅ Better error handling
 - ✅ Uses AWS SDK v3
-- ✅ Node 20 runtime
+- ✅ Node 20 runtime (Node 24 since v1.1.0)
 
 This eliminates caching issues caused by old files remaining in S3.
 
@@ -40,6 +50,8 @@ Useful for testing before actual deployment.
 ### `s3-prefix`
 
 **Optional** Prefix/folder path in S3 bucket. Default: `''` (root level)
+
+Leading/trailing slashes are ignored (`v2/app`, `/v2/app/` and `v2/app/` are equivalent). With `delete-non-existing: true`, only objects under the prefix are candidates for deletion.
 
 ### `bypass-deletion-check`
 
@@ -126,10 +138,11 @@ Number of files deleted from S3.
    - v1.0.0: Syncs files (uploads + deletes orphaned files)
    - Migration: Set `delete-non-existing: false` to keep old behavior
 
-2. **Node 20 required**
+2. **Node 24 required**
    - v0.x: node16
    - v1.0.0: node20
-   - Migration: None required (GitHub Actions handles this)
+   - v1.1.0: node24
+   - Migration: None required on GitHub-hosted runners; self-hosted runners must be v2.328.0 or newer
 
 3. **Errors now fail the action**
    - v0.x: Upload errors were logged but didn't fail the action
