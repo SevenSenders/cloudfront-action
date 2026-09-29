@@ -23,7 +23,8 @@
   "main": "index.js",
   "scripts": {
     "build": "ncc build index.js -o dist --source-map",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test": "node --test"
   },
   "dependencies": {
     "@actions/core": "^2.0.3",

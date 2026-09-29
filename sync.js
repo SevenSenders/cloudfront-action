@@ -42,9 +42,18 @@ async function listAllS3Objects(bucket, prefix = '') {
 }
 
 /**
+ * Normalize the S3 prefix to '' or 'some/folder/' (no leading slash, one trailing slash)
+ * so listing 'app/' never matches siblings like 'app2/'
+ */
+function normalizePrefix(prefix = '') {
+  const trimmed = prefix.replace(/^\/+|\/+$/g, '');
+  return trimmed ? `${trimmed}/` : '';
+}
+
+/**
  * Walk local directory and build file map
  */
-function getLocalFiles(buildFolderPath) {
+function getLocalFiles(buildFolderPath, prefix = '') {
   const files = new Map(); // key -> { localPath, md5, content }
   
   function walkSync(currentDirPath) {
@@ -53,8 +62,9 @@ function getLocalFiles(buildFolderPath) {
       const stat = fs.statSync(filePath);
       
       if (stat.isFile()) {
-        // Calculate S3 key (relative path from build folder)
-        const s3Key = path.relative(buildFolderPath, filePath);
+        // Calculate S3 key (prefix + relative path from build folder, always '/'-separated)
+        const relativePath = path.relative(buildFolderPath, filePath).split(path.sep).join('/');
+        const s3Key = `${prefix}${relativePath}`;
         
         // Calculate MD5 for change detection (matches S3 ETag for non-multipart)
         const content = fs.readFileSync(filePath);
@@ -155,10 +165,14 @@ async function syncToS3(bucket, buildFolderPath, options = {}) {
   const { 
     deleteNonExisting = true,
     dryRun = false,
-    prefix = '',
+    prefix: rawPrefix = '',
     maxDeletionRatio = 0.9,
     bypassDeletionCheck = false
   } = options;
+  
+  // S3 keys and local keys must share the same prefix, otherwise every object
+  // under the prefix looks orphaned and uploads land at the bucket root
+  const prefix = normalizePrefix(rawPrefix);
   
   console.log(`Syncing ${buildFolderPath} to s3://${bucket}/${prefix}`);
   console.log(`Options: deleteNonExisting=${deleteNonExisting}, dryRun=${dryRun}`);
@@ -170,7 +184,7 @@ async function syncToS3(bucket, buildFolderPath, options = {}) {
   
   // Step 2: Get local files
   console.log('Scanning local files...');
-  const localFiles = getLocalFiles(buildFolderPath);
+  const localFiles = getLocalFiles(buildFolderPath, prefix);
   console.log(`Found ${localFiles.size} local files`);
   
   // SAFEGUARD 1: Don't sync empty folder
@@ -236,4 +250,4 @@ async function syncToS3(bucket, buildFolderPath, options = {}) {
   };
 }
 
-module.exports = { syncToS3, listAllS3Objects, deleteS3Objects };
+module.exports = { syncToS3, listAllS3Objects, deleteS3Objects, getLocalFiles, normalizePrefix };
